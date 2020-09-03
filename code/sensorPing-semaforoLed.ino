@@ -2,99 +2,102 @@
    ################
    #   Lab15125   #
    ################
- 
-   Este codigo tiene como objetivo dar muestra de un uso practico de:
-   Sensor ultrasonico ping (parallax)
+Este programa usa un sensor de proximidad PING para 
+medir la distancia entre un objeto y el sensor. Se escogen 
+una distancia máxima y una distancia mínima de 327.0 cm
+y 2.5 cm respectivamente, las cuales son muy cercanas al 
+rango de operación del instrumento.
 
-   Según la hoja de datos de Parallax para el PING))), 
-   hay 73,746 microsegundos por pulgada o 29,034 microsegundos por centimetro 
-   (es decir, el sonido viaja a 1130 pies (o 34442.4cm) por segundo). 
-   Este da la distancia recorrida por el ping, ida y vuelta, 
-   por lo que dividimos por 2 para obtener la distancia del obstáculo.
-   ver: 
-   https://www.parallax.com/sites/default/files/downloads/28015-PING-Sensor-Product-Guide-v2.0.pdf
-        [En el PDF: TO_IN = 73_746' Inches ; TO_CM = 29_034' Centimeters ]
+Cuando el objeto detectado se encuentra dentro de un rango
+previamente definido, se enciende un led de un color específico.
+- Led verde:    entre   2.5 cm y 109.0 cm
+- Led amarillo: entre 109.0 cm y 218.0 cm
+- Led rojo:     entre 218.0 cm y 327.0 cm
 
-   El circuito:
-     * +V conectado a sensor PING))) en +5V
-     * GND conectado a sensor PING))) en GND (ground)
-     * SIG conectado a sensor PING))) en pin digital 7
-     * LED conectado a pin 9 (PWM)
+El programa también ejecuta comunicación serial e imprime 
+continuamente el valor de la distancia mínima, la distancia 
+máxima y la distancia actual a la que se encuentra un objeto
+detectado por el sensor.
 
-   Funcion
-   readUltrasonicDistance(int triggerPin, int echoPin): Referencia obtenida de sensor ultrasonico tinkercad.com
+// ********************************************** //
+  Ping))) Sensor
+
+  This sketch reads a PING))) ultrasonic
+  rangefinder and returns the distance to the
+  closest object in range. To do this, it sends a
+  pulse to the sensor to initiate a reading, then
+  listens for a pulse to return.  The length of
+  the returning pulse is proportional to the
+  distance of the object from the sensor.
+
+  The circuit:
+   * +V connection of the PING))) attached to +5V
+   * GND connection attached to ground
+   * SIG connection attached to digital pin 7
+  http://www.arduino.cc/en/Tutorial/Ping
+
+  This example code is in the public domain.
 */
 
+float distancia = 0.0;
+int ledVerde = 2;
+int ledAmarillo = 3;
+int ledRojo = 4;
+float distMin = 2.5; // distancia mínima de operación
+float distMax = 327.0; // distancia máxima de operación
 
-/*
-Inicio declaracion funcion readUltrasonicDistance
-*/
-long readUltrasonicDistance(int triggerPin, int echoPin)
-{
-  pinMode(triggerPin, OUTPUT);  // Inicializar LOW para limpiar trigger por 2 microsegundos
+long readUltrasonicDistance(int triggerPin, int echoPin){
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
-  // Inicializar trigger en HIGH por 8 microsegundos para comenzar
+  // Sets the trigger pin to HIGH state for 10 microseconds
   digitalWrite(triggerPin, HIGH);
-  delayMicroseconds(8);
+  delayMicroseconds(10);
   digitalWrite(triggerPin, LOW);
   pinMode(echoPin, INPUT);
-  // lectura de pin echo con el retorno de la señal
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
   return pulseIn(echoPin, HIGH);
 }
-/*
-Fin declaracion funcion readUltrasonicDistance
-*/
 
-
-/*
-Inicio funcion setup
-*/
-void setup()
-{
-  pinMode(8, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(2, OUTPUT);
+void setup(){
+  pinMode(ledVerde, OUTPUT);
+  pinMode(ledAmarillo, OUTPUT);
+  pinMode(ledRojo, OUTPUT);
+  Serial.begin(9600);
 }
-/*
-Fin funcion setup
-*/
 
-
-/*
-Inicio funcion loop
-*/
-void loop()
-{
-  int distancia = 0.01723 * readUltrasonicDistance(2, 2);
-
-  if((distancia <= 333) && (distancia >= 200)) {
-    digitalWrite(8, HIGH);
-  } 
-  else {
-    digitalWrite(8, LOW); 
+void loop(){
+  // measure the ping time in cm
+  float distancia = 0.01723 * readUltrasonicDistance(7, 7);
+  
+  if ((distancia >= distMin) && distancia <= distMax/3){
+    digitalWrite(ledVerde, HIGH);
   }
-  if((distancia < 200) && (distancia >= 100)) {
-    digitalWrite(7, HIGH);
-  } 
   else {
-    digitalWrite(7, LOW); 
+    digitalWrite(ledVerde, LOW);
   }
-  if(distancia < 100) {
-    digitalWrite(4, HIGH);
-  } 
+  if ((distancia > distMax/3) && (distancia <= distMax*2/3)){
+    digitalWrite(ledAmarillo, HIGH);
+  }
   else {
-    digitalWrite(4, LOW); 
+    digitalWrite(ledAmarillo, LOW);
   }
-   
-
-  delay(10); // Delay a little bit to improve simulation performance
+  if ((distancia > distMax*2/3) && (distancia <= distMax)){
+    digitalWrite(ledRojo, HIGH);
+  }
+  else {
+    digitalWrite(ledRojo, LOW);
+  }
+  
+  Serial.print("distancia minima: ");
+  Serial.print(distMin);
+  Serial.print("\t distancia maxima: ");
+  Serial.print(distMax);
+  Serial.print("\t distancia: ");
+  Serial.println(distancia);
+      
+  delay(10);
 }
-/*
-Inicio funcion loop
-*/
-
-/*
  #######################
  #   Fin de programa   #
  #######################
